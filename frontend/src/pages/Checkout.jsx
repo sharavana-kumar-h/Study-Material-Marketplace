@@ -16,7 +16,7 @@ export default function Checkout() {
     setError('')
 
     try {
-      await ordersAPI.checkout({ user_id: user.user_id })
+      await ordersAPI.checkout({ UserID: user.UserID })
       clearCart()
       alert('Order placed successfully! Sellers will contact you for pickup.')
       navigate('/profile')

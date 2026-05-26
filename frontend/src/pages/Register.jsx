@@ -10,7 +10,7 @@ export default function Register() {
     email: '',
     password: '',
     confirmPassword: '',
-    department_id: '1',
+    DepartmentID: '1',
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -29,7 +29,7 @@ export default function Register() {
       formData.name,
       formData.email,
       formData.password,
-      parseInt(formData.department_id)
+      parseInt(formData.DepartmentID)
     )
 
     if (result.success) {
@@ -79,8 +79,8 @@ export default function Register() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
             <select
-              value={formData.department_id}
-              onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
+              value={formData.DepartmentID}
+              onChange={(e) => setFormData({ ...formData, DepartmentID: e.target.value })}
               className="input-field"
             >
               <option value="1">Computer Science</option>

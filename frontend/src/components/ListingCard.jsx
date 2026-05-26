@@ -7,12 +7,21 @@ export default function ListingCard({ listing }) {
     'Like New': 'bg-blue-100 text-blue-800',
     'Good': 'bg-yellow-100 text-yellow-800',
     'Fair': 'bg-orange-100 text-orange-800',
+    'Poor': 'bg-red-100 text-red-800'
   }
 
   return (
     <Link to={`/listings/${listing.ListingID}`} className="card hover:shadow-xl transition-shadow">
-      <div className="h-48 bg-gradient-to-br from-blue-100 to-purple-100 rounded-t-lg flex items-center justify-center mb-4">
-        <span className="text-6xl">📖</span>
+      
+      <div className="h-48 bg-gray-100 rounded-t-lg flex items-center justify-center overflow-hidden">
+        {listing.ImageBase64 ? (
+          <img
+            src={listing.hasImage ? `${import.meta.env.VITE_API_BASE_URL}/listings/image/${listing.BookID}` : "/default-book.png"}
+            className="h-48 w-full object-cover rounded-t-lg"
+          />
+        ) : (
+          <span className="text-6xl">📖</span>
+        )}
       </div>
 
       <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">

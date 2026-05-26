@@ -1,209 +1,162 @@
-import React,{ useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { listingsAPI } from '../api/api'
-import { useAuth } from '../context/AuthContext'
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { listingsAPI } from "../api/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function AddListing() {
-  const { user } = useAuth()
-  const navigate = useNavigate()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const [formData, setFormData] = useState({
-    title: '',
-    author: '',
-    edition: '',
-    course_code: '',
-    price: '',
-    condition: 'Good',
-    quantity: '1',
-    description: '',
-  })
+    title: "",
+    author: "",
+    course_code: "",
+    price: "",
+    condition: "Good",
+    quantity: "1",
+    description: "",
+  });
+
+  const [image, setImage] = useState(null);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-  }
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleImageChange = (e) => {
+    setImage(e.target.files[0]);
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
-      await listingsAPI.create({
-        seller_id: user.user_id,
-        title: formData.title,
-        author: formData.author,
-        edition: formData.edition,
-        course_code: formData.course_code,
-        price: parseFloat(formData.price),
-        condition: formData.condition,
-        quantity: parseInt(formData.quantity),
-        description: formData.description,
-      })
-      
-      alert('Listing created successfully!')
-      navigate('/listings')
+      if (!user || !user.userID) {
+        setError("User not logged in");
+        setLoading(false);
+        return;
+      }
+
+      const fd = new FormData();
+
+      // Add text inputs
+      Object.entries(formData).forEach(([key, value]) => {
+        fd.append(key, value);
+      });
+
+      // Correct seller_id
+      fd.append("seller_id", user.userID);
+
+      // Image
+      if (image) {
+        fd.append("image", image);
+      }
+
+      await listingsAPI.create(fd);
+
+      alert("Listing created successfully!");
+      navigate("/listings");
+
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create listing')
+      console.error("Create listing error:", err);
+      setError(err.response?.data?.error || "Failed to create listing");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Sell Your Textbook</h1>
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">Sell Your Textbook</h1>
 
-      <div className="card">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
+      {error && (
+        <div className="bg-red-100 text-red-700 p-3 mb-4 rounded">{error}</div>
+      )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Book Title *
-              </label>
-              <input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                required
-                className="input-field"
-                placeholder="Introduction to Algorithms"
-              />
-            </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <input
+          name="title"
+          value={formData.title}
+          onChange={handleChange}
+          placeholder="Book Title"
+          required
+          className="w-full p-2 border rounded"
+        />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Author *
-              </label>
-              <input
-                type="text"
-                name="author"
-                value={formData.author}
-                onChange={handleChange}
-                required
-                className="input-field"
-                placeholder="Cormen, Leiserson, Rivest"
-              />
-            </div>
+        <input
+          name="author"
+          value={formData.author}
+          onChange={handleChange}
+          placeholder="Author"
+          required
+          className="w-full p-2 border rounded"
+        />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Edition
-              </label>
-              <input
-                type="text"
-                name="edition"
-                value={formData.edition}
-                onChange={handleChange}
-                className="input-field"
-                placeholder="3rd Edition"
-              />
-            </div>
+        <input
+          name="course_code"
+          value={formData.course_code}
+          onChange={handleChange}
+          placeholder="Course Code (E.g., CSE101)"
+          className="w-full p-2 border rounded"
+        />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Course Code
-              </label>
-              <input
-                type="text"
-                name="course_code"
-                value={formData.course_code}
-                onChange={handleChange}
-                className="input-field"
-                placeholder="CS101"
-              />
-            </div>
+        <input
+          name="price"
+          type="number"
+          min="1"
+          value={formData.price}
+          onChange={handleChange}
+          placeholder="Price"
+          required
+          className="w-full p-2 border rounded"
+        />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Price (₹) *
-              </label>
-              <input
-                type="number"
-                name="price"
-                value={formData.price}
-                onChange={handleChange}
-                required
-                min="0"
-                step="0.01"
-                className="input-field"
-                placeholder="500"
-              />
-            </div>
+        <input
+          name="quantity"
+          type="number"
+          min="1"
+          value={formData.quantity}
+          onChange={handleChange}
+          placeholder="Quantity"
+          required
+          className="w-full p-2 border rounded"
+        />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Condition *
-              </label>
-              <select
-                name="condition"
-                value={formData.condition}
-                onChange={handleChange}
-                className="input-field"
-              >
-                <option value="New">New</option>
-                <option value="Like New">Like New</option>
-                <option value="Good">Good</option>
-                <option value="Fair">Fair</option>
-              </select>
-            </div>
+        <select
+          name="condition"
+          value={formData.condition}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        >
+          <option value="New">New</option>
+          <option value="Like New">Like New</option>
+          <option value="Good">Good</option>
+          <option value="Fair">Fair</option>
+        </select>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Quantity *
-              </label>
-              <input
-                type="number"
-                name="quantity"
-                value={formData.quantity}
-                onChange={handleChange}
-                required
-                min="1"
-                className="input-field"
-                placeholder="1"
-              />
-            </div>
-          </div>
+        <div>
+          <label className="font-medium block mb-2">Upload Book Image</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="w-full p-2 border rounded"
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows="4"
-              className="input-field"
-              placeholder="Any additional details about the book..."
-            />
-          </div>
-
-          <div className="flex gap-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 btn-primary disabled:bg-gray-400"
-            >
-              {loading ? 'Creating...' : 'Create Listing'}
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/listings')}
-              className="flex-1 btn-secondary"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700 disabled:bg-gray-400"
+        >
+          {loading ? "Uploading..." : "Create Listing"}
+        </button>
+      </form>
     </div>
-  )
+  );
 }

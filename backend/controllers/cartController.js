@@ -1,132 +1,171 @@
+// backend/controllers/cartController.js
 import db from '../config/db.js';
 
+/**
+ * GET /api/cart/:userId
+ * Returns all items in a user's cart with joined listing + book + seller info.
+ */
 export async function getCart(req, res) {
   try {
     const { userId } = req.params;
 
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID required' });
+    }
+
     const query = `
-      SELECT 
-        c.cart_id,
-        c.user_id,
-        c.listing_id,
-        c.quantity,
-        l.price,
-        l.condition,
-        l.quantity as available_quantity,
-        b.title,
-        b.author,
-        b.edition,
-        u.name as seller_name
-      FROM Cart c
-      JOIN Listings l ON c.listing_id = l.listing_id
-      JOIN Books b ON l.book_id = b.book_id
-      JOIN Users u ON l.seller_id = u.user_id
-      WHERE c.user_id = ?
+      SELECT
+        c.CartID        AS cart_id,
+        c.UserID        AS user_id,
+        c.ListingID     AS listing_id,
+        c.Quantity      AS quantity,
+        l.Price         AS price,
+        l.Condition     AS item_condition,
+        l.Quantity      AS available_quantity,
+        b.Title         AS title,
+        b.Author        AS author,
+        u.Name          AS seller_name
+      FROM cart c
+      JOIN listings l ON c.ListingID = l.ListingID   -- FIXED
+      JOIN books    b ON l.BookID = b.BookID         -- FIXED
+      JOIN users    u ON l.SellerID = u.UserID       -- FIXED
+      WHERE c.UserID = ?
     `;
 
-    const [cartItems] = await db.query(query, [userId]);
-    res.json(cartItems);
+    const [rows] = await db.query(query, [userId]);
+    return res.json(rows);
+
   } catch (error) {
     console.error('Get cart error:', error);
-    res.status(500).json({ error: 'Failed to fetch cart', message: error.message });
+    return res
+      .status(500)
+      .json({ error: 'Failed to fetch cart', message: error.message });
   }
 }
 
+/**
+ * POST /api/cart/add
+ * Body: { userID, listingID, quantity }
+ */
 export async function addToCart(req, res) {
   try {
-    const { user_id, listing_id, quantity } = req.body;
+    const userId = req.body.userID || req.body.UserID;
+    const listingId = req.body.listingID || req.body.ListingID;
+    const quantity = Number(req.body.quantity) || 1;
 
-    // Validation
-    if (!user_id || !listing_id || !quantity) {
+    if (!userId || !listingId || !quantity) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Check if listing exists and has quantity
+    // Check listing availability
     const [listings] = await db.query(
-      'SELECT quantity FROM Listings WHERE listing_id = ? AND status = "Available"',
-      [listing_id]
+      'SELECT Quantity FROM listings WHERE ListingID = ? AND Status = "Available"',
+      [listingId]
     );
 
     if (listings.length === 0) {
       return res.status(404).json({ error: 'Listing not available' });
     }
 
-    if (listings.quantity < quantity) {
+    if (listings[0].Quantity < quantity) {
       return res.status(400).json({ error: 'Insufficient quantity available' });
     }
 
     // Check if already in cart
     const [existing] = await db.query(
-      'SELECT cart_id FROM Cart WHERE user_id = ? AND listing_id = ?',
-      [user_id, listing_id]
+      'SELECT CartID, Quantity FROM cart WHERE UserID = ? AND ListingID = ?',
+      [userId, listingId]
     );
 
     if (existing.length > 0) {
-      // Update quantity
       await db.query(
-        'UPDATE Cart SET quantity = quantity + ? WHERE user_id = ? AND listing_id = ?',
-        [quantity, user_id, listing_id]
+        'UPDATE cart SET Quantity = Quantity + ? WHERE UserID = ? AND ListingID = ?',
+        [quantity, userId, listingId]
       );
     } else {
-      // Insert new cart item
       await db.query(
-        'INSERT INTO Cart (user_id, listing_id, quantity) VALUES (?, ?, ?)',
-        [user_id, listing_id, quantity]
+        'INSERT INTO cart (UserID, ListingID, Quantity) VALUES (?, ?, ?)',
+        [userId, listingId, quantity]
       );
     }
 
-    // Return updated cart
+    // Updated cart
     const [cartItems] = await db.query(
-      `SELECT c.cart_id, c.listing_id, c.quantity, l.price, b.title, u.name as seller_name
-       FROM Cart c
-       JOIN Listings l ON c.listing_id = l.listing_id
-       JOIN Books b ON l.book_id = b.book_id
-       JOIN Users u ON l.seller_id = u.user_id
-       WHERE c.user_id = ?`,
-      [user_id]
+      `
+      SELECT
+        c.CartID      AS cart_id,
+        c.ListingID   AS listing_id,
+        c.Quantity    AS quantity,
+        l.Price       AS price,
+        b.Title       AS title,
+        u.Name        AS seller_name
+      FROM cart c
+      JOIN listings l ON c.ListingID = l.ListingID
+      JOIN books    b ON l.BookID = b.BookID
+      JOIN users    u ON l.SellerID = u.UserID
+      WHERE c.UserID = ?
+      `,
+      [userId]
     );
 
-    res.json({
+    return res.json({
       ok: true,
       message: 'Added to cart',
       cart: cartItems,
     });
+
   } catch (error) {
     console.error('Add to cart error:', error);
-    res.status(500).json({ error: 'Failed to add to cart', message: error.message });
+    return res
+      .status(500)
+      .json({ error: 'Failed to add to cart', message: error.message });
   }
 }
 
+/**
+ * POST /api/cart/remove
+ * Body: { userID, listingID }
+ */
 export async function removeFromCart(req, res) {
   try {
-    const { user_id, listing_id } = req.body;
+    const userId = req.body.userID || req.body.UserID;
+    const listingId = req.body.listingID || req.body.ListingID;
 
-    if (!user_id || !listing_id) {
+    if (!userId || !listingId) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
     await db.query(
-      'DELETE FROM Cart WHERE user_id = ? AND listing_id = ?',
-      [user_id, listing_id]
+      'DELETE FROM cart WHERE UserID = ? AND ListingID = ?',
+      [userId, listingId]
     );
 
-    // Return updated cart
     const [cartItems] = await db.query(
-      `SELECT c.cart_id, c.listing_id, c.quantity, l.price, b.title
-       FROM Cart c
-       JOIN Listings l ON c.listing_id = l.listing_id
-       JOIN Books b ON l.book_id = b.book_id
-       WHERE c.user_id = ?`,
-      [user_id]
+      `
+      SELECT
+        c.CartID      AS cart_id,
+        c.ListingID   AS listing_id,
+        c.Quantity    AS quantity,
+        l.Price       AS price,
+        b.Title       AS title
+      FROM cart c
+      JOIN listings l ON c.ListingID = l.ListingID
+      JOIN books    b ON l.BookID = b.BookID
+      WHERE c.UserID = ?
+      `,
+      [userId]
     );
 
-    res.json({
+    return res.json({
       ok: true,
       message: 'Removed from cart',
       cart: cartItems,
     });
+
   } catch (error) {
     console.error('Remove from cart error:', error);
-    res.status(500).json({ error: 'Failed to remove from cart', message: error.message });
+    return res
+      .status(500)
+      .json({ error: 'Failed to remove from cart', message: error.message });
   }
 }

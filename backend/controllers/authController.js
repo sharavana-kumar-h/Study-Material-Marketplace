@@ -3,15 +3,15 @@ import bcrypt from 'bcrypt';
 
 export async function register(req, res) {
   try {
-    const { name, email, password, department_id } = req.body;
+    const { name, email, password, DepartmentID } = req.body;
 
     // Validation
-    if (!name || !email || !password || !department_id) {
+    if (!name || !email || !password || !DepartmentID) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    // Check if user exists
-    const [existingUser] = await db.query('SELECT user_id FROM Users WHERE email = ?', [email]);
+    // Check if user exists (DB column is `Email`)
+    const [existingUser] = await db.query('SELECT UserID FROM users WHERE Email = ?', [email]);
     if (existingUser.length > 0) {
       return res.status(400).json({ error: 'Email already registered' });
     }
@@ -19,17 +19,17 @@ export async function register(req, res) {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Insert user
+    // Insert user using DB column names
     const [result] = await db.query(
-      'INSERT INTO Users (name, email, password_hash, department_id) VALUES (?, ?, ?, ?)',
-      [name, email, passwordHash, department_id]
+      'INSERT INTO users (Name, Email, PasswordHash, DepartmentID) VALUES (?, ?, ?, ?)',
+      [name, email, passwordHash, DepartmentID]
     );
 
     const user = {
-      user_id: result.insertId,
+      userID: result.insertId,
       name,
       email,
-      department_id,
+      departmentID: DepartmentID,
     };
 
     res.json({
@@ -52,16 +52,16 @@ export async function login(req, res) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Find user
-    const [users] = await db.query('SELECT * FROM Users WHERE email = ?', [email]);
+    // Find user (DB column is `Email` and other columns are PascalCase)
+    const [users] = await db.query('SELECT * FROM users WHERE Email = ?', [email]);
     if (users.length === 0) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const user = users;
+    const user = users[0];
 
-    // Compare passwords
-    const passwordMatch = await bcrypt.compare(password, user.password_hash);
+    // Compare passwords (DB column is `PasswordHash`)
+    const passwordMatch = await bcrypt.compare(password, user.PasswordHash);
     if (!passwordMatch) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
@@ -70,10 +70,10 @@ export async function login(req, res) {
       ok: true,
       message: 'Login successful',
       user: {
-        user_id: user.user_id,
-        name: user.name,
-        email: user.email,
-        department_id: user.department_id,
+        userID: user.UserID,
+        name: user.Name ,
+        email: user.Email ,
+        departmentID: user.DepartmentID ,
       },
     };
 

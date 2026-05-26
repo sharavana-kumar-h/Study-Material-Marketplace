@@ -35,7 +35,7 @@ export default function ListingDetail() {
       return
     }
 
-    if (user.user_id === listing.seller_id) {
+    if (user.UserID === listing.seller_id) {
       alert('You cannot buy your own listing')
       return
     }
@@ -133,7 +133,7 @@ export default function ListingDetail() {
               )}
             </div>
 
-            {listing.status === 'Available' && user?.user_id !== listing.seller_id && (
+            {listing.status === 'Available' && user?.UserID !== listing.seller_id && (
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -157,7 +157,7 @@ export default function ListingDetail() {
               </div>
             )}
 
-            {user?.user_id === listing.seller_id && (
+            {user?.UserID === listing.seller_id && (
               <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded">
                 This is your listing
               </div>

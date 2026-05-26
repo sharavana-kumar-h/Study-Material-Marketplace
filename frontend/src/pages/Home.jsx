@@ -19,9 +19,6 @@ export default function Home() {
             <Link to="/listings" className="bg-white text-primary px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
               Browse Textbooks
             </Link>
-            <div className="bg-red-500 text-white p-4">
-  Tailwind test
-</div>
 
             {user ? (
               <Link to="/add-listing" className="bg-transparent border-2 border-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-primary transition">
