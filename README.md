@@ -1,29 +1,32 @@
-# Study-Material-Marketplace
-File Structure
+# Study Material Marketplace
+
+## File Structure
+
+```text
 Study-Material-Marketplace/
-├── backend/                          # Express.js backend
+├── backend/                             # Express.js backend
 │   ├── config/
-│   │   └── db.js                    # MySQL connection pool
-│   ├── controllers/                  # Business logic
+│   │   └── db.js                        # MySQL connection pool
+│   ├── controllers/                     # Business logic
 │   │   ├── authController.js
 │   │   ├── listingController.js
 │   │   ├── cartController.js
 │   │   └── orderController.js
-│   ├── routes/                       # API routes
+│   ├── routes/                          # API routes
 │   │   ├── auth.js
 │   │   ├── listings.js
 │   │   ├── cart.js
 │   │   └── orders.js
 │   ├── middleware/
-│   │   └── auth.js                  # Auth middleware
+│   │   └── auth.js                      # Authentication middleware
 │   ├── package.json
 │   ├── .env
-│   └── server.js                    # Entry point
+│   └── server.js                        # Application entry point
 │
-├── frontend/                         # React app
+├── frontend/                            # React application
 │   ├── src/
 │   │   ├── api/
-│   │   │   └── api.js               # Axios configuration
+│   │   │   └── api.js                   # Axios configuration
 │   │   ├── pages/
 │   │   │   ├── Home.jsx
 │   │   │   ├── Login.jsx
@@ -40,17 +43,18 @@ Study-Material-Marketplace/
 │   │   │   ├── SearchBar.jsx
 │   │   │   └── CartItem.jsx
 │   │   ├── context/
-│   │   │   ├── AuthContext.jsx      # Auth state
-│   │   │   └── CartContext.jsx      # Cart state
-│   │   ├── App.jsx                  # Route definitions
-│   │   └── main.jsx                 # Entry point
+│   │   │   ├── AuthContext.jsx          # Authentication state management
+│   │   │   └── CartContext.jsx          # Cart state management
+│   │   ├── App.jsx                      # Route definitions
+│   │   └── main.jsx                     # React entry point
 │   ├── package.json
 │   └── tailwind.config.js
 │
 ├── database/
-│   └── schema.sql     
-│   └── functions.sql        # Database tables and sample data
+│   ├── schema.sql                       # Database schema
+│   └── functions.sql                    # Stored procedures/functions
 │
-├── README.md                        # This file
-├── deployment-guide.md              # Deployment instructions
-└── backend-setup-guide.md           # Complete backend code
+├── README.md                            # Project documentation
+├── deployment-guide.md                  # Deployment instructions
+└── backend-setup-guide.md               # Backend setup guide
+```
